@@ -1,213 +1,154 @@
---[[
-    🌊 تسونامي ألتيميت V6 - السكريبت العربي الكامل 🌊
-    لا تموت | سرعة مخصصة | أوتو فارم | مناطق آمنة
-]]
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local player = Players.LocalPlayer
-
--- تنظيف النسخ القديمة
-for _, gui in pairs(game:GetService("CoreGui"):GetChildren()) do
-    if gui.Name:find("TsunamiV6") then gui:Destroy() end
-end
-
--- المتغيرات
-local settings = {
-    laTamot = false, sor3aMode = false, flyMode = false, 
-    autoFarm = false, tsunamiShield = false
-}
-local customSpeed = 120
-local currentZone = 1
-
--- جميع المناطق الآمنة
-local safeZones = {
-    {name = "قاعدة البداية", pos = CFrame.new(0, 15, 0)},
-    {name = "الخندق الأول", pos = CFrame.new(45, 8, 0)},
-    {name = "التل الأول", pos = CFrame.new(95, 25, 0)},
-    {name = "منطقة VIP", pos = CFrame.new(145, 35, 0)},
-    {name = "المنطقة النهائية", pos = CFrame.new(220, 60, 0)},
-    {name = "كوزميك زون", pos = CFrame.new(300, 80, 0)}
-}
-
--- إنشاء الواجهة العربية
+-- إنشاء الواجهة الأساسية للسكربت
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "TsunamiV6"
-ScreenGui.Parent = game:GetService("CoreGui")
-
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 420, 0, 750)
-MainFrame.Position = UDim2.new(0.01, 0, 0.01, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 30)
-MainFrame.Active = true
-MainFrame.Draggable = true
-MainFrame.Parent = ScreenGui
-
-local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 25)
-MainCorner.Parent = MainFrame
-
--- العنوان العربي الكبير
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 70)
-Title.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
-Title.Text = "🌊 تسونامي ألتيميت V6 - العربي 🌊"
-Title.TextColor3 = Color3.new(1, 1, 1)
-Title.TextSize = 24
-Title.Font = Enum.Font.GothamBold
+local SlotsContainer = Instance.new("ScrollingFrame")
+local UIListLayout = Instance.new("UIListLayout")
+
+-- إعدادات الشاشة وحمايتها من الاختفاء عند الموت
+ScreenGui.Name = "LOBY_Teleport_System"
+ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.ResetOnSpawn = false
+
+-- تصميم الإطار الرئيسي (الصفحة الصغيرة)
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.05, 0, 0.3, 0)
+MainFrame.Size = UDim2.new(0, 260, 0, 360)
+MainFrame.Active = true
+MainFrame.Draggable = true -- يمكنك تحريك الصفحة بيدك في الشاشة
+
+-- عنوان السكربت (LOBY)
+Title.Name = "Title"
 Title.Parent = MainFrame
+Title.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Font = Enum.Font.SourceSansBold
+Title.Text = "LOBY SYSTEM"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 20.000
 
-local TitleCorner = Instance.new("UICorner")
-TitleCorner.CornerRadius = UDim.new(0, 20)
-TitleCorner.Parent = Title
+-- حاوية الأماكن (Slots)
+SlotsContainer.Name = "SlotsContainer"
+SlotsContainer.Parent = MainFrame
+SlotsContainer.BackgroundTransparency = 1.000
+SlotsContainer.Position = UDim2.new(0, 5, 0, 45)
+SlotsContainer.Size = UDim2.new(1, -10, 1, -50)
+SlotsContainer.ScrollBarThickness = 4
 
--- 🔥 مربع السرعة المخصصة 🔥
-local SpeedFrame = Instance.new("Frame")
-SpeedFrame.Size = UDim2.new(0.92, 0, 0, 65)
-SpeedFrame.Position = UDim2.new(0.04, 0, 0.11, 0)
-SpeedFrame.BackgroundColor3 = Color3.fromRGB(50, 200, 255)
-SpeedFrame.Parent = MainFrame
+UIListLayout.Parent = SlotsContainer
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 6)
 
-local SpeedCorner = Instance.new("UICorner")
-SpeedCorner.CornerRadius = UDim.new(0, 15)
-SpeedCorner.Parent = SpeedFrame
-
-local SpeedLabel = Instance.new("TextLabel")
-SpeedLabel.Size = UDim2.new(0.35, 0, 1, 0)
-SpeedLabel.BackgroundTransparency = 1
-SpeedLabel.Text = "⚡ حدد السرعة:"
-SpeedLabel.TextColor3 = Color3.new(1, 1, 1)
-SpeedLabel.TextSize = 16
-SpeedLabel.Font = Enum.Font.GothamBold
-SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
-SpeedLabel.Parent = SpeedFrame
-
-local SpeedBox = Instance.new("TextBox")
-SpeedBox.Size = UDim2.new(0.35, 0, 0.7, 0)
-SpeedBox.Position = UDim2.new(0.4, 0, 0.15, 0)
-SpeedBox.BackgroundColor3 = Color3.new(1, 1, 1)
-SpeedBox.Text = "120"
-SpeedBox.TextColor3 = Color3.new(0, 0, 0)
-SpeedBox.TextSize = 18
-SpeedBox.Font = Enum.Font.GothamBold
-SpeedBox.Parent = SpeedFrame
-
-local SpeedBtn = Instance.new("TextButton")
-SpeedBtn.Size = UDim2.new(0.25, 0, 0.7, 0)
-SpeedBtn.Position = UDim2.new(0.77, 0, 0.15, 0)
-SpeedBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-SpeedBtn.Text = "✅ تحديث"
-SpeedBtn.TextColor3 = Color3.new(1, 1, 1)
-SpeedBtn.TextSize = 14
-SpeedBtn.Font = Enum.Font.GothamBold
-SpeedBtn.Parent = SpeedFrame
-
-SpeedBtn.MouseButton1Click:Connect(function()
-    local num = tonumber(SpeedBox.Text)
-    if num and num > 0 then
-        customSpeed = num
-        print("✅ السرعة الجديدة: " .. customSpeed)
-    else
-        SpeedBox.Text = tostring(customSpeed)
-    end
-end)
-
--- 🔥 الأزرار العربية الكاملة 🔥
-local buttons = {
-    {"لا تموت", "🛡️", Color3.fromRGB(0, 255, 0)},
-    {"سرعة خارقة", "⚡", Color3.fromRGB(50, 200, 255)},
-    {"طيران", "✈️", Color3.fromRGB(255, 200, 50)},
-    {"أوتو فارم", "🤖", Color3.fromRGB(255, 100, 200)},
-    {"منطقة آمنة", "🏠", Color3.fromRGB(100, 255, 100)},
-    {"حماية تسونامي", "🌊", Color3.fromRGB(0, 255, 200)}
+-- جدول لتخزين الإحداثيات المحفوظة للأماكن الستة
+local SavedLocations = {
+    [1] = nil, [2] = nil, [3] = nil, [4] = nil, [5] = nil, [6] = nil
 }
 
-local yPos = 0.26
-for i, data in ipairs(buttons) do
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.92, 0, 0, 55)
-    btn.Position = UDim2.new(0.04, 0, yPos, 0)
-    btn.BackgroundColor3 = data[3]
-    btn.Text = data[2] .. " " .. data[1]
-    btn.TextColor3 = Color3.new(1, 1, 1)
-    btn.TextSize = 16
-    btn.Font = Enum.Font.GothamBold
-    btn.Parent = MainFrame
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 15)
-    corner.Parent = btn
-    
-    local toggle = false
-    btn.MouseButton1Click:Connect(function()
-        toggle = not toggle
-        btn.Text = data[2] .. " " .. data[1] .. (toggle and " ✅" or " ❌")
-        btn.BackgroundColor3 = toggle and Color3.fromRGB(0, 255, 0) or data[3]
-        
-        -- تفعيل الميزات
-        if data[1] == "لا تموت" then settings.laTamot = toggle
-        elseif data[1] == "سرعة خارقة" then settings.sor3aMode = toggle
-        elseif data[1] == "طيران" then settings.flyMode = toggle
-        elseif data[1] == "أوتو فارم" then settings.autoFarm = toggle
-        elseif data[1] == "حماية تسونامي" then settings.tsunamiShield = toggle end
-    end)
-    
-    yPos = yPos + 0.085
+-- دالة جلب موقع اللاعب الحالي بأمان
+local function getPlayerFrame()
+    local player = game:GetService("Players").LocalPlayer
+    if player and player.Character then
+        local root = player.Character:FindFirstChild("HumanoidRootPart")
+        return root
+    end
+    return nil
 end
 
--- 🔥 النظام الرئيسي العربي 🔥
-spawn(function()
-    while task.wait(0.1) do
-        pcall(function()
-            local char = player.Character
-            if char then
-                local hum = char:FindFirstChildOfClass("Humanoid")
-                local root = char:FindFirstChild("HumanoidRootPart")
-                
-                if hum and root then
-                    -- لا تموت (مضمون 100%)
-                    if settings.laTamot then
-                        hum.Health = math.huge
-                        hum.MaxHealth = math.huge
-                        
-                        -- منع فقدان الصحة
-                        if hum.Health < math.huge then
-                            hum.Health = math.huge
-                        end
-                    end
-                    
-                    -- سرعة مخصصة
-                    if settings.sor3aMode then
-                        hum.WalkSpeed = customSpeed
-                        hum.JumpPower = customSpeed * 1.5
-                    end
-                    
-                    -- طيران
-                    if settings.flyMode then
-                        local bv = root:FindFirstChild("FlyBV") or Instance.new("BodyVelocity")
-                        bv.Name = "FlyBV"
-                        bv.MaxForce = Vector3.new(4000, 4000, 4000)
-                        bv.Velocity = Vector3.new(0, 50, 0)
-                        bv.Parent = root
-                    else
-                        if root:FindFirstChild("FlyBV") then root.FlyBV:Destroy() end
-                    end
-                    
-                    -- أوتو فارم
-                    if settings.autoFarm then
-                        for _, obj in pairs(workspace:GetChildren()) do
-                            if obj.Name:lower():find("brain") then
-                                root.CFrame = obj.CFrame + Vector3.new(0, 5, 0)
-                                firetouchinterest(root, obj, 0)
-                                firetouchinterest(root, obj, 1)
-                            end
-                        end
-                    end
-                end
-            end
-        end)
-    end
-end)
+-- دالة برمجية لإنشاء أسطر التحكم (من 1 إلى 6) بكل تنظيم
+local function CreateSlot(number)
+    local SlotFrame = Instance.new("Frame")
+    local SlotName = Instance.new("TextLabel")
+    local SaveBtn = Instance.new("TextButton")
+    local TeleBtn = Instance.new("TextButton")
+    local ClearBtn = Instance.new("TextButton")
 
-print("🌊 تسونامي ألتيميت V6 العربي شغال 100%!")
-print("✅ لا تموت مضمون | سرعة مخصصة | كل المميزات")
+    SlotFrame.Name = "Slot" .. number
+    SlotFrame.Parent = SlotsContainer
+    SlotFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    SlotFrame.Size = UDim2.new(1, 0, 0, 45)
+    SlotFrame.BorderSizePixel = 0
+
+    -- رقم المكان
+    SlotName.Parent = SlotFrame
+    SlotName.BackgroundTransparency = 1.000
+    SlotName.Position = UDim2.new(0, 5, 0, 0)
+    SlotName.Size = UDim2.new(0, 50, 1, 0)
+    SlotName.Font = Enum.Font.SourceSansBold
+    SlotName.Text = "مكان " .. number
+    SlotName.TextColor3 = Color3.fromRGB(200, 200, 200)
+    SlotName.TextSize = 16.000
+    SlotName.TextXAlignment = Enum.TextXAlignment.Left
+
+    -- زر حفظ المكان
+    SaveBtn.Parent = SlotFrame
+    SaveBtn.BackgroundColor3 = Color3.fromRGB(46, 139, 87)
+    SaveBtn.Position = UDim2.new(0, 60, 0, 8)
+    SaveBtn.Size = UDim2.new(0, 50, 0, 28)
+    SaveBtn.Font = Enum.Font.SourceSansBold
+    SaveBtn.Text = "حفظ"
+    SaveBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SaveBtn.TextSize = 14.000
+
+    -- زر الانتقال
+    TeleBtn.Parent = SlotFrame
+    TeleBtn.BackgroundColor3 = Color3.fromRGB(30, 144, 255)
+    TeleBtn.Position = UDim2.new(0, 115, 0, 8)
+    TeleBtn.Size = UDim2.new(0, 60, 0, 28)
+    TeleBtn.Font = Enum.Font.SourceSansBold
+    TeleBtn.Text = "انتقال"
+    TeleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TeleBtn.TextSize = 14.000
+
+    -- زر إلغاء الحفظ
+    ClearBtn.Parent = SlotFrame
+    ClearBtn.BackgroundColor3 = Color3.fromRGB(178, 34, 34)
+    ClearBtn.Position = UDim2.new(0, 180, 0, 8)
+    ClearBtn.Size = UDim2.new(0, 65, 0, 28)
+    ClearBtn.Font = Enum.Font.SourceSansBold
+    ClearBtn.Text = "إلغاء"
+    ClearBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ClearBtn.TextSize = 14.000
+
+    -- تفعيل الأزرار برمجياً لكل مكان بشكل منفصل
+    
+    -- 1. زر الحفظ
+    SaveBtn.MouseButton1Click:Connect(function()
+        local root = getPlayerFrame()
+        if root then
+            SavedLocations[number] = root.CFrame
+            SaveBtn.Text = "تم ✅"
+            task.wait(1)
+            SaveBtn.Text = "حفظ"
+        end
+    end)
+
+    -- 2. زر الانتقال
+    TeleBtn.MouseButton1Click:Connect(function()
+        local root = getPlayerFrame()
+        if root and SavedLocations[number] then
+            root.CFrame = SavedLocations[number]
+        elseif not SavedLocations[number] then
+            TeleBtn.Text = "فارغ X"
+            task.wait(1)
+            TeleBtn.Text = "انتقال"
+        end
+    end)
+
+    -- 3. زر إلغاء الحفظ ومسح الإحداثيات
+    ClearBtn.MouseButton1Click:Connect(function()
+        if SavedLocations[number] then
+            SavedLocations[number] = nil
+            ClearBtn.Text = "مُسِح"
+            task.wait(1)
+            ClearBtn.Text = "إلغاء"
+        end
+    end)
+end
+
+-- تكرار لإنشاء الأماكن من 1 إلى 6 بشكل تلقائي ومنظم
+for i = 1, 6 do
+    CreateSlot(i)
+end
